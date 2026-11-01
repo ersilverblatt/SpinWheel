@@ -115,6 +115,7 @@ body.partyon .modal{background:transparent;backdrop-filter:none}
 <body>
 <header>
   <h1><span>Spin</span> the Wheel</h1>
+  <button class="icon" id="bParty" title="Celebration on/off">🎉</button>
   <button class="icon" id="bSound" title="Sound on/off">🔊</button>
   <button class="icon" id="bTheme" title="Light / dark">🌗</button>
   <button class="icon" id="bFull" title="Fullscreen">⛶</button>
@@ -214,8 +215,11 @@ body.partyon .modal{background:transparent;backdrop-filter:none}
         <select data-k="music"><option value="off">Off</option><option value="jingle">Game-show jingle</option><option value="file">My own audio file</option></select></label>
       <div class="btnrow" id="musicFileRow" hidden><button class="btn" id="bMusicFile">🎵 Choose audio file…</button><span class="hint" id="musicName">No file chosen</span></div>
       <input type="file" id="musicFile" accept="audio/*" hidden>
-      <label class="f"><span>Cat party</span>
-        <select data-k="cats"><option value="drawn">Dancing cats + rainbows</option><option value="custom">My own cat pictures</option><option value="off">Off</option></select></label>
+      <label class="f"><span>Celebration</span><input type="checkbox" data-k="party"></label>
+      <label class="f"><span>Background</span>
+        <select data-k="scene"><option value="themed">Scene for the winning pair</option><option value="stars">Starry rainbow sky</option><option value="none">None</option></select></label>
+      <label class="f"><span>Cats</span>
+        <select data-k="cats"><option value="drawn">Dancing cats</option><option value="custom">My own cat pictures</option><option value="off">Off</option></select></label>
       <div class="btnrow" id="catFileRow" hidden><button class="btn" id="bCatFiles">🐱 Choose pictures or GIFs…</button><span class="hint" id="catNames">None chosen</span></div>
       <input type="file" id="catFiles" accept="image/*" multiple hidden>
       <label class="f"><span>Confetti</span><input type="checkbox" data-k="confetti"></label>
@@ -307,7 +311,7 @@ const DEFAULTS = {
   rimColor: '#2b2f55', rimWidth: 0.07, lights: true, lightColor: '#ffd54a', pegs: true,
   pointer: 'pin', pointerColor: '#ffffff',
   duration: 6, spins: 6, easing: 'quint', idle: true,
-  sound: true, volume: 0.6, music: 'jingle', cats: 'drawn', confetti: true, popup: true, autoRemove: false,
+  sound: true, volume: 0.6, music: 'jingle', cats: 'drawn', party: true, scene: 'themed', confetti: true, popup: true, autoRemove: false,
   history: [],
 };
 
@@ -815,10 +819,12 @@ function stopSky() {
 }
 function cheer(o) {
   stopCheer();
-  if (!buildParty(o)) return;
+  if (!S.party) return;
+  const cats = buildParty(o), sky = S.scene !== 'none';
+  if (!cats && !sky) return;
   void $('#party').offsetWidth;
-  $('#party').classList.add('on');
-  startSky(o);
+  if (cats) $('#party').classList.add('on');
+  if (sky) startSky(S.scene === 'themed' ? o : null);
   cheerTimer = setTimeout(stopCheer, 11500);
 }
 function stopCheer() { clearTimeout(cheerTimer); $('#party').classList.remove('on'); stopSky(); }
@@ -1299,6 +1305,7 @@ function syncUI() {
   $$('.pal').forEach(b => b.classList.toggle('on', b.dataset.pal === S.palette));
   $('#title').textContent = S.title;
   $('#bSound').textContent = S.sound ? '🔊' : '🔇';
+  $('#bParty').style.opacity = S.party ? 1 : 0.4;
   $('#musicFileRow').hidden = S.music !== 'file';
   $('#catFileRow').hidden = S.cats !== 'custom';
 }
@@ -1357,6 +1364,7 @@ $('#bHistClear').onclick = () => { S.history = []; save(); renderHistory(); };
 function applyTheme() { document.documentElement.dataset.theme = S.theme; }
 $('#bTheme').onclick = () => { S.theme = S.theme === 'dark' ? 'light' : 'dark'; applyTheme(); save(); };
 $('#bSound').onclick = () => { S.sound = !S.sound; syncUI(); save(); };
+$('#bParty').onclick = () => { S.party = !S.party; if (!S.party) stopCheer(); syncUI(); toast(S.party ? 'Celebration on' : 'Celebration off'); };
 $('#bFull').onclick = () => {
   try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch {}
 };
