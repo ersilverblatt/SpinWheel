@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spin the Wheel</title>
+<style>
+:root{--bg:#0e1020;--bg2:#1c1f44;--panel:rgba(255,255,255,.06);--panel2:rgba(255,255,255,.1);--line:rgba(255,255,255,.13);--fg:#f2f3ff;--muted:#9aa0c8;--accent:#7c5cff;--accent2:#ff5ea8}
+[data-theme=light]{--bg:#f4f5fb;--bg2:#dfe3fb;--panel:rgba(255,255,255,.75);--panel2:rgba(20,20,80,.07);--line:rgba(20,20,60,.14);--fg:#161833;--muted:#5d6288}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:radial-gradient(1100px 700px at 15% -10%,var(--bg2),transparent 70%),radial-gradient(900px 600px at 100% 100%,var(--bg2),transparent 70%),var(--bg);background-attachment:fixed}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px}
+header h1{font-size:20px;margin:0;flex:1;letter-spacing:.3px}
+header h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.icon{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font-size:17px;cursor:pointer}
+.icon:hover{background:var(--panel2)}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:20px;padding:0 20px 24px;max-width:1400px;margin:auto;align-items:start}
+.stage{display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0;min-width:0}
+.stage h2{margin:0;font-size:26px;text-align:center;min-height:32px}
+.wheelwrap{width:min(100%,76vh,760px);aspect-ratio:1}
+canvas#wheel{width:100%;height:100%;cursor:pointer;display:block}
+.spinbtn{border:0;border-radius:999px;padding:14px 46px;font-size:20px;font-weight:800;letter-spacing:2px;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 8px 28px rgba(124,92,255,.45);transition:transform .15s,box-shadow .15s}
+.spinbtn:hover:not(:disabled){transform:translateY(-2px) scale(1.03)}
+.spinbtn:disabled{opacity:.6;cursor:default}
+.hint{color:var(--muted);font-size:13px}
+.last{display:flex;gap:8px;align-items:center;min-height:30px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;background:var(--panel2);color:var(--fg);font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(10px);overflow:hidden;position:sticky;top:12px;max-height:calc(100vh - 24px);display:flex;flex-direction:column}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;padding:13px 4px;background:none;border:0;color:var(--muted);font:inherit;font-weight:600;cursor:pointer;border-bottom:2px solid transparent}
+.tabs button.on{color:var(--fg);border-color:var(--accent)}
+.pane{padding:16px;overflow:auto;display:none}
+.pane.on{display:block}
+label.f{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 11px;font-size:14px}
+label.f>span:first-child{color:var(--muted);flex:0 0 auto}
+label.f input[type=range]{flex:1;min-width:60px;accent-color:var(--accent)}
+output{min-width:42px;text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+input[type=text],input[type=number],select,textarea{background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;min-width:0}
+input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+select option{color:#111}
+input[type=color]{width:34px;height:30px;padding:0;border:1px solid var(--line);border-radius:8px;background:none;cursor:pointer}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+h4{margin:18px 0 10px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+h4:first-child{margin-top:0}
+.btn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);font:inherit;font-size:13px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.addrow{display:flex;gap:8px;margin-bottom:12px}
+.addrow input{flex:1}
+.row{display:grid;grid-template-columns:34px 1fr 62px 22px 28px;gap:7px;align-items:center;margin-bottom:7px}
+.row.off input.t{opacity:.45;text-decoration:line-through}
+.row input.t,.row input.w{width:100%}
+.row .del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:16px}
+.row .del:hover{color:#ff5470}
+.pals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.pal{height:34px;border-radius:10px;border:2px solid transparent;cursor:pointer;padding:0}
+.pal.on{border-color:var(--fg);box-shadow:0 0 0 2px var(--accent)}
+textarea{width:100%;min-height:150px;resize:vertical}
+.hist{list-style:none;padding:0;margin:0}
+.hist li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.hist li small{margin-left:auto;color:var(--muted)}
+.tally{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,6,20,.6);backdrop-filter:blur(6px);z-index:20;animation:fade .25s}
+.modal[hidden]{display:none}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:24px;padding:34px 38px;text-align:center;max-width:min(520px,92vw);box-shadow:0 30px 80px rgba(0,0,0,.5);border-top:8px solid var(--wc,var(--accent));animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+.card .crown{font-size:56px}
+.card p{margin:4px 0 0;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-size:12px}
+.card h2 hr{border:0;height:3px;border-radius:3px;background:var(--fg);margin:12px 0;width:100%}
+.card h2{display:table;margin:8px auto 22px;font-size:clamp(30px,6vw,52px);overflow-wrap:anywhere;line-height:1.1}
+.card .btnrow{justify-content:center}
+@keyframes pop{from{transform:scale(.6) rotate(-4deg);opacity:0}}
+@keyframes fade{from{opacity:0}}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:30;width:100%;height:100%}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:600;z-index:40;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+@media(max-width:960px){.app{grid-template-columns:1fr}aside{position:static;max-height:none}.wheelwrap{width:min(100%,640px)}}
+</style>
+</head>
+<body>
+<header>
+  <h1><span>Spin</span> the Wheel</h1>
+  <button class="icon" id="bSound" title="Sound on/off">🔊</button>
+  <button class="icon" id="bTheme" title="Light / dark">🌗</button>
+  <button class="icon" id="bFull" title="Fullscreen">⛶</button>
+</header>
+
+<div class="app">
+  <section class="stage" id="stage">
+    <h2 id="title"></h2>
+    <div class="wheelwrap"><canvas id="wheel"></canvas></div>
+    <button class="spinbtn" id="spin">SPIN</button>
+    <div class="hint">Click the wheel or press <b>Space</b> to spin</div>
+    <div class="last" id="last"></div>
+  </section>
+
+  <aside>
+    <nav class="tabs">
+      <button class="on" data-tab="options">Options</button>
+      <button data-tab="style">Style</button>
+      <button data-tab="spin">Spin</button>
+      <button data-tab="history">History</button>
+    </nav>
+
+    <div class="pane on" data-pane="options">
+      <div class="addrow"><input type="text" id="addText" placeholder="Add an option…"><button class="btn primary" id="addBtn">Add</button></div>
+      <div id="list"></div>
+      <div class="btnrow">
+        <button class="btn" id="bShuffle">🔀 Shuffle</button>
+        <button class="btn" id="bSort">A→Z Sort</button>
+        <button class="btn" id="bBulk">📝 Bulk edit</button>
+        <button class="btn" id="bClear">Clear all</button>
+      </div>
+      <div id="bulkBox" hidden>
+        <textarea id="bulkText" placeholder="One option per line"></textarea>
+        <div class="btnrow"><button class="btn primary" id="bulkApply">Apply</button></div>
+      </div>
+      <h4>Presets</h4>
+      <select id="preset" style="width:100%"></select>
+      <h4>Save &amp; share</h4>
+      <div class="btnrow">
+        <button class="btn" id="bExport">⬇ Export JSON</button>
+        <button class="btn" id="bImport">⬆ Import JSON</button>
+        <button class="btn" id="bReset">Reset everything</button>
+      </div>
+      <input type="file" id="file" accept="application/json,.json" hidden>
+      <div class="hint">Weight changes the odds: a weight of 2 is twice as likely as 1.</div>
+    </div>
+
+    <div class="pane" data-pane="style">
+      <h4>Colors</h4>
+      <div class="pals" id="pals"></div>
+      <div class="btnrow" style="margin-top:0"><button class="btn" id="bUncolor">Reset custom slice colors</button></div>
+      <label class="f"><span>Wheel title</span><input type="text" data-k="title" style="width:200px"></label>
+      <label class="f"><span>Slice shading</span><input type="checkbox" data-k="shading"></label>
+      <label class="f"><span>Separator width</span><input type="range" data-k="gap" min="0" max="8" step="0.5"><output data-out="gap" data-unit="px"></output></label>
+      <label class="f"><span>Separator color</span><input type="color" data-k="gapColor"></label>
+      <h4>Labels</h4>
+      <label class="f"><span>Emojis instead of words</span><input type="checkbox" data-k="iconLabels"></label>
+      <label class="f"><span>Font</span>
+        <select data-k="font">
+          <option value="system-ui, sans-serif">System</option>
+          <option value="Georgia, serif">Serif</option>
+          <option value="'Arial Black', Impact, sans-serif">Heavy</option>
+          <option value="'Comic Sans MS', 'Comic Neue', cursive">Playful</option>
+          <option value="'Courier New', monospace">Mono</option>
+        </select></label>
+      <label class="f"><span>Direction</span>
+        <select data-k="textMode"><option value="out">Start at the center</option><option value="in">End at the rim</option></select></label>
+      <label class="f"><span>Text color</span>
+        <select data-k="textColor"><option value="auto">Auto contrast</option><option value="light">Always light</option><option value="dark">Always dark</option></select></label>
+      <label class="f"><span>Text size</span><input type="range" data-k="fontScale" min="0.5" max="1.6" step="0.05"><output data-out="fontScale" data-unit="×"></output></label>
+      <h4>Center hub</h4>
+      <label class="f"><span>Hub text</span><input type="text" data-k="hubText" maxlength="10" style="width:120px"></label>
+      <label class="f"><span>Hub size</span><input type="range" data-k="hubSize" min="0.08" max="0.34" step="0.01"><output data-out="hubSize"></output></label>
+      <label class="f"><span>Hub color</span><input type="color" data-k="hubColor"></label>
+      <h4>Rim &amp; pointer</h4>
+      <label class="f"><span>Rim color</span><input type="color" data-k="rimColor"></label>
+      <label class="f"><span>Rim thickness</span><input type="range" data-k="rimWidth" min="0.03" max="0.14" step="0.005"><output data-out="rimWidth"></output></label>
+      <label class="f"><span>Bulb lights</span><input type="checkbox" data-k="lights"></label>
+      <label class="f"><span>Light color</span><input type="color" data-k="lightColor"></label>
+      <label class="f"><span>Pegs on rim</span><input type="checkbox" data-k="pegs"></label>
+      <label class="f"><span>Pointer style</span>
+        <select data-k="pointer"><option value="pin">Pin</option><option value="triangle">Triangle</option><option value="arrow">Arrow</option></select></label>
+      <label class="f"><span>Pointer color</span><input type="color" data-k="pointerColor"></label>
+    </div>
+
+    <div class="pane" data-pane="spin">
+      <h4>Motion</h4>
+      <label class="f"><span>Duration</span><input type="range" data-k="duration" min="2" max="20" step="0.5"><output data-out="duration" data-unit="s"></output></label>
+      <label class="f"><span>Min rotations</span><input type="range" data-k="spins" min="2" max="20" step="1"><output data-out="spins"></output></label>
+      <label class="f"><span>Slow-down feel</span>
+        <select data-k="easing"><option value="quint">Smooth</option><option value="cubic">Gentle</option><option value="expo">Dramatic (long crawl)</option><option value="quad">Punchy</option></select></label>
+      <label class="f"><span>Idle drift</span><input type="checkbox" data-k="idle"></label>
+      <h4>Sound &amp; effects</h4>
+      <label class="f"><span>Sound</span><input type="checkbox" data-k="sound"></label>
+      <label class="f"><span>Volume</span><input type="range" data-k="volume" min="0" max="1" step="0.05"><output data-out="volume"></output></label>
+      <label class="f"><span>Spin music</span>
+        <select data-k="music"><option value="off">Off</option><option value="jingle">Game-show jingle</option><option value="file">My own audio file</option></select></label>
+      <div class="btnrow" id="musicFileRow" hidden><button class="btn" id="bMusicFile">🎵 Choose audio file…</button><span class="hint" id="musicName">No file chosen</span></div>
+      <input type="file" id="musicFile" accept="audio/*" hidden>
+      <label class="f"><span>Confetti</span><input type="checkbox" data-k="confetti"></label>
+      <label class="f"><span>Winner pop-up</span><input type="checkbox" data-k="popup"></label>
+      <h4>After a spin</h4>
+      <label class="f"><span>Remove winner afterwards</span><input type="checkbox" data-k="autoRemove"></label>
+    </div>
+
+    <div class="pane" data-pane="history">
+      <div class="tally" id="tally"></div>
+      <ul class="hist" id="hist"></ul>
+      <div class="btnrow"><button class="btn" id="bHistClear">Clear history</button></div>
+    </div>
+  </aside>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="card" id="card">
+    <div class="crown" id="crown">🎉</div>
+    <p>The wheel chose</p>
+    <h2 id="winText"></h2>
+    <div class="btnrow">
+      <button class="btn primary" id="mAgain">Spin again</button>
+      <button class="btn" id="mRemove">Remove from wheel</button>
+      <button class="btn" id="mClose">Close</button>
+    </div>
+  </div>
+</div>
+<canvas id="fx"></canvas>
+
+<script>
+'use strict';
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const TAU = Math.PI * 2;
+const mod = (a, n) => ((a % n) + n) % n;
+const uid = () => Math.random().toString(36).slice(2, 9);
+const rand = () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
+
+const PALETTES = {
+  vibrant: ['#ff4d6d', '#ff9f1c', '#ffd60a', '#2ec4b6', '#3a86ff', '#8338ec', '#ff006e'],
+  pastel:  ['#ffadad', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff'],
+  sunset:  ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#e76f51', '#c1121f'],
+  ocean:   ['#03045e', '#0077b6', '#00b4d8', '#90e0ef', '#48cae4', '#023e8a'],
+  neon:    ['#ff00e5', '#00f0ff', '#39ff14', '#fff200', '#ff3131', '#9d00ff'],
+  forest:  ['#1b4332', '#2d6a4f', '#40916c', '#52b788', '#74c69d', '#95d5b2'],
+  candy:   ['#ff5ea8', '#ffa8d4', '#7bdff2', '#b2f7ef', '#e7c6ff', '#f7d6e0'],
+  mono:    ['#1f2937', '#4b5563', '#9ca3af', '#e5e7eb'],
+};
+
+// c = gradient from the first half of the pair to the second, i = an emoji for each half
+const DIPTYCHS = [
+  { text: 'Flooding / Drought', c: ['#1565c0', '#d9a441'], i: ['🌊', '🏜️'] },
+  { text: 'Extreme Heat / Extreme Cold', c: ['#e8452c', '#4fb9ec'], i: ['☀️', '❄️'] },
+  { text: 'Biodiversity Needed / Development Needed', c: ['#2e9e4f', '#6b7280'], i: ['🦋', '🏗️'] },
+  { text: 'Water Problems / Water Uses', c: ['#7a6a35', '#1fa8e0'], i: ['🚱', '🚰'] },
+  { text: 'Storms, All Kinds / Fires, All Kinds', c: ['#4a4f8f', '#f2701b'], i: ['🌪️', '🔥'] },
+  { text: 'Economic Crash / Economic Boom', c: ['#c62839', '#2eb85c'], i: ['📉', '📈'] },
+  { text: 'Energy Policies / Reuse Policies', c: ['#f0b429', '#1fa38a'], i: ['⚡', '♻️'] },
+];
+const mkOpt = d => typeof d === 'string'
+  ? { id: uid(), text: d, weight: 1, color: '', enabled: true }
+  : { id: uid(), text: d.text, weight: 1, color: '', enabled: true, bg: d.c, icons: d.i };
+
+const PRESETS = {
+  'Diptychs': DIPTYCHS,
+  'Yes / No': ['Yes', 'No'],
+  'Dice (1–6)': ['1', '2', '3', '4', '5', '6'],
+  'Lunch ideas': ['Pizza 🍕', 'Tacos 🌮', 'Sushi 🍣', 'Burgers 🍔', 'Pasta 🍝', 'Salad 🥗', 'Ramen 🍜'],
+  'Truth or dare': ['Truth', 'Dare', 'Double dare', 'Skip', 'Wild card'],
+  'Who goes first?': ['Player 1', 'Player 2', 'Player 3', 'Player 4'],
+  'Weekend plans': ['Hike 🥾', 'Movie night 🎬', 'Board games 🎲', 'Cook something new 🍳', 'Sleep in 😴', 'Road trip 🚗'],
+  'Prizes (weighted)': [['Grand prize 🏆', 0.5], ['Gift card 🎁', 1.5], ['Sticker ⭐', 3], ['High five ✋', 4], ['Try again', 4]],
+};
+
+const DEFAULTS = {
+  title: 'Diptychs',
+  options: DIPTYCHS.map(mkOpt),
+  palette: 'vibrant', theme: null, shading: true, gap: 2, gapColor: '#ffffff',
+  iconLabels: true, font: 'system-ui, sans-serif', textMode: 'in', textColor: 'auto', fontScale: 1,
+  hubText: 'SPIN', hubSize: 0.17, hubColor: '#ffffff',
+  rimColor: '#2b2f55', rimWidth: 0.07, lights: true, lightColor: '#ffd54a', pegs: true,
+  pointer: 'pin', pointerColor: '#ffffff',
+  duration: 6, spins: 6, easing: 'quint', idle: true,
+  sound: true, volume: 0.6, music: 'jingle', confetti: true, popup: true, autoRemove: false,
+  history: [],
+};
+
+const KEY = 'spinwheel.v1';
+let S = structuredClone(DEFAULTS);
+try {
+  const stored = JSON.parse(localStorage.getItem(KEY));
+  if (stored && typeof stored === 'object') S = { ...S, ...stored };
+  if (!Array.isArray(S.options)) S.options = structuredClone(DEFAULTS.options);
+  if (!Array.isArray(S.history)) S.history = [];
+  for (const o of S.options) {
+    const d = DIPTYCHS.find(d => d.text === o.text);
+    if (d && !o.bg) { o.bg = d.c; o.icons = d.i; }
+  }
+} catch {}
+if (!S.theme) S.theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+
+let saveTimer;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }, 250);
+}
+
+/* ---------- color helpers ---------- */
+function hex2rgb(h) {
+  h = h.replace('#', '');
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  const n = parseInt(h, 16);
+  return [n >> 16 & 255, n >> 8 & 255, n & 255];
+}
+const mix = (h, t, a) => `rgb(${hex2rgb(h).map(v => Math.round(v + (t - v) * a)).join(',')})`;
+const lum = h => { const [r, g, b] = hex2rgb(h); return (0.299 * r + 0.587 * g + 0.114 * b) / 255; };
+
+/* ---------- slices ---------- */
+function slices() {
+  const act = S.options.filter(o => o.enabled && o.text.trim() && o.weight > 0);
+  const total = act.reduce((a, o) => a + o.weight, 0);
+  const pal = PALETTES[S.palette] || PALETTES.vibrant;
+  let a = 0;
+  return act.map((o, i) => {
+    let color = o.color;
+    if (!color) {
+      color = pal[i % pal.length];
+      if (i === act.length - 1 && i > 0 && pal.length > 2 && color === pal[0]) color = pal[(i + 1) % pal.length];
+    }
+    const span = TAU * o.weight / total;
+    const bg = !o.color && Array.isArray(o.bg) ? o.bg : null;
+    if (bg) color = '#' + [0, 1, 2].map(k => Math.round((hex2rgb(bg[0])[k] + hex2rgb(bg[1])[k]) / 2).toString(16).padStart(2, '0')).join('');
+    const s = { o, i, start: a, end: a + span, color, bg };
+    a += span;
+    return s;
+  });
+}
+function sliceIndexAt(sl, theta) {
+  const local = mod(-Math.PI / 2 - theta, TAU);
+  for (const s of sl) if (local >= s.start && local < s.end) return s.i;
+  return sl.length - 1;
+}
+
+/* ---------- state ---------- */
+const cv = $('#wheel'), ctx = cv.getContext('2d');
+let theta = -Math.PI / 2 + 0.3, spinState = null, winId = null, lastIdx = -1, kick = 0, dpr = 1;
+let modalWinner = null, lastTick = 0, bulbMode = 'idle';
+
+const EASE = {
+  quint: t => 1 - Math.pow(1 - t, 5),
+  cubic: t => 1 - Math.pow(1 - t, 3),
+  quad: t => 1 - (1 - t) * (1 - t),
+  expo: t => (1 - Math.pow(2, -10 * t)) / (1 - Math.pow(2, -10)),
+};
+
+/* ---------- audio ---------- */
+let ac;
+function audio() {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
+  if (ac.state === 'suspended') ac.resume();
+  return ac;
+}
+function tone(freq, t0, dur, type, vol, slideTo) {
+  const a = audio(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + t0;
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol * S.volume), t + 0.004);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(a.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+function tickSound() {
+  if (!S.sound || S.volume <= 0) return;
+  const now = performance.now();
+  if (now - lastTick < 28) return;
+  lastTick = now;
+  tone(760 + Math.random() * 90, 0, 0.06, 'triangle', 0.3, 300);
+}
+function winSound() {
+  if (!S.sound || S.volume <= 0) return;
+  [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, i * 0.11, i === 3 ? 0.6 : 0.2, 'triangle', 0.35));
+}
+
+/* ---------- spin music ---------- */
+let musicTimer = null, musicStep = 0, musicAudio = null, musicUrl = null;
+const JINGLE = [0, 4, 7, 12, 7, 4, 9, 12, 14, 12, 9, 7, 4, 7, 5, 2];
+function startMusic() {
+  stopMusic();
+  if (!S.sound || S.volume <= 0) return;
+  if (S.music === 'jingle') {
+    musicStep = 0;
+    musicTimer = setInterval(() => {
+      const n = JINGLE[musicStep % JINGLE.length];
+      tone(261.63 * Math.pow(2, n / 12), 0, 0.14, 'square', 0.07);
+      if (musicStep % 4 === 0) tone(130.81 * Math.pow(2, (n % 7) / 12), 0, 0.3, 'triangle', 0.18);
+      musicStep++;
+    }, 125);
+  } else if (S.music === 'file' && musicUrl) {
+    musicAudio = new Audio(musicUrl);
+    musicAudio.loop = true; musicAudio.volume = S.volume;
+    musicAudio.play().catch(() => {});
+  }
+}
+function stopMusic() {
+  clearInterval(musicTimer); musicTimer = null;
+  if (musicAudio) { musicAudio.pause(); musicAudio = null; }
+}
+$('#bMusicFile').onclick = () => $('#musicFile').click();
+$('#musicFile').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  if (musicUrl) URL.revokeObjectURL(musicUrl);
+  musicUrl = URL.createObjectURL(f);
+  $('#musicName').textContent = f.name;
+};
+
+/* ---------- drawing ---------- */
+function fitCanvas() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  const r = cv.getBoundingClientRect();
+  cv.width = Math.max(10, Math.round(r.width * dpr));
+  cv.height = Math.max(10, Math.round(r.height * dpr));
+}
+new ResizeObserver(fitCanvas).observe(cv);
+
+function pathCircle(x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); }
+
+function draw(t) {
+  const W = cv.width, H = cv.height;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 * 0.86;
+  const rw = R * S.rimWidth, r = R - rw, hubR = r * S.hubSize;
+  const sl = slices();
+
+  // rim
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = R * 0.1; ctx.shadowOffsetY = R * 0.035;
+  const rg = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+  rg.addColorStop(0, mix(S.rimColor, 255, 0.3)); rg.addColorStop(0.5, S.rimColor); rg.addColorStop(1, mix(S.rimColor, 0, 0.35));
+  ctx.fillStyle = rg; pathCircle(cx, cy, R); ctx.fill();
+  ctx.restore();
+
+  // wedges
+  ctx.save();
+  ctx.translate(cx, cy); ctx.rotate(theta);
+  if (!sl.length) {
+    ctx.fillStyle = '#3a3f66'; pathCircle(0, 0, r); ctx.fill();
+  }
+  for (const s of sl) {
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, r, s.start, s.end); ctx.closePath();
+    if (s.bg) {
+      const k = r * 0.75;
+      const lg = ctx.createLinearGradient(Math.cos(s.start) * k, Math.sin(s.start) * k, Math.cos(s.end) * k, Math.sin(s.end) * k);
+      lg.addColorStop(0, s.bg[0]); lg.addColorStop(1, s.bg[1]);
+      ctx.fillStyle = lg; ctx.fill();
+      if (S.shading) {
+        const g = ctx.createRadialGradient(0, 0, hubR, 0, 0, r);
+        g.addColorStop(0, 'rgba(255,255,255,.18)'); g.addColorStop(0.6, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(0,0,0,.22)');
+        ctx.fillStyle = g; ctx.fill();
+      }
+      if (s.o.icons && !S.iconLabels) {
+        const span = s.end - s.start, mid = (s.start + s.end) / 2, size = Math.min(r * 0.13, r * 0.62 * span * 0.3);
+        ctx.save();
+        ctx.font = `${size}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.globalAlpha = 0.9;
+        s.o.icons.forEach((ic, n) => {
+          const a = mid + (n ? 1 : -1) * span * 0.34;
+          ctx.save(); ctx.translate(Math.cos(a) * r * 0.62, Math.sin(a) * r * 0.62); ctx.rotate(a + Math.PI / 2);
+          ctx.fillText(ic, 0, 0); ctx.restore();
+        });
+        ctx.restore();
+      }
+    } else {
+      if (S.shading) {
+        const g = ctx.createRadialGradient(0, 0, hubR, 0, 0, r);
+        g.addColorStop(0, mix(s.color, 255, 0.16)); g.addColorStop(0.7, s.color); g.addColorStop(1, mix(s.color, 0, 0.18));
+        ctx.fillStyle = g;
+      } else ctx.fillStyle = s.color;
+      ctx.fill();
+    }
+    if (winId) {
+      ctx.fillStyle = s.o.id === winId ? `rgba(255,255,255,${0.14 + 0.14 * Math.sin(t * 7)})` : 'rgba(0,0,0,.42)';
+      ctx.fill();
+    }
+    if (S.gap > 0) { ctx.strokeStyle = S.gapColor; ctx.lineWidth = S.gap * dpr; ctx.lineJoin = 'round'; ctx.stroke(); }
+  }
+  for (const s of sl) drawLabel(s, r, hubR, R);
+  if (S.pegs && sl.length > 1) {
+    for (const s of sl) {
+      ctx.save(); ctx.rotate(s.start);
+      ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = R * 0.012;
+      ctx.fillStyle = '#f5f1e6'; pathCircle(r, 0, rw * 0.2); ctx.fill();
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+
+  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 2 * dpr; pathCircle(cx, cy, r); ctx.stroke();
+
+  // bulbs
+  if (S.lights) {
+    const n = 28, br = R - rw / 2;
+    for (let i = 0; i < n; i++) {
+      const a = i / n * TAU - Math.PI / 2;
+      let on;
+      if (bulbMode === 'spin') on = (i + Math.floor(t * 14)) % 3 === 0;
+      else if (bulbMode === 'win') on = Math.floor(t * 6) % 2 === i % 2;
+      else on = Math.floor(t * 1.5) % 2 === i % 2;
+      const x = cx + Math.cos(a) * br, y = cy + Math.sin(a) * br;
+      ctx.save();
+      if (on) { ctx.shadowColor = S.lightColor; ctx.shadowBlur = R * 0.04; ctx.fillStyle = S.lightColor; }
+      else { ctx.fillStyle = mix(S.lightColor, 0, 0.7); }
+      pathCircle(x, y, rw * 0.22); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // hub
+  const pulse = spinState || winId ? 1 : 1 + 0.025 * Math.sin(t * 3);
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = R * 0.05; ctx.shadowOffsetY = R * 0.015;
+  const hg = ctx.createRadialGradient(cx - hubR * 0.3, cy - hubR * 0.4, hubR * 0.1, cx, cy, hubR * pulse);
+  hg.addColorStop(0, mix(S.hubColor, 255, 0.5)); hg.addColorStop(1, mix(S.hubColor, 0, 0.18));
+  ctx.fillStyle = hg; pathCircle(cx, cy, hubR * pulse); ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(0,0,0,.2)'; ctx.lineWidth = 2 * dpr; pathCircle(cx, cy, hubR * pulse); ctx.stroke();
+  if (S.hubText) {
+    let fs = hubR * 0.52;
+    ctx.font = `800 ${fs}px ${S.font}`;
+    const w = ctx.measureText(S.hubText).width;
+    if (w > hubR * 1.6) { fs *= hubR * 1.6 / w; ctx.font = `800 ${fs}px ${S.font}`; }
+    ctx.fillStyle = lum(S.hubColor) > 0.55 ? '#1a1c33' : '#fff';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(S.hubText, cx, cy + fs * 0.04);
+  }
+
+  drawPointer(cx, cy, R);
+}
+
+function drawLabel(s, r, hubR, R) {
+  const span = s.end - s.start, mid = (s.start + s.end) / 2;
+  const inner = hubR + R * 0.03, outer = r - R * 0.045, avail = outer - inner;
+  const arcH = 2 * r * 0.7 * Math.sin(Math.min(span, Math.PI) / 2) * 0.78;
+  if (S.iconLabels && s.o.icons) {
+    const size = Math.min(avail * 0.4, arcH * 1.1, r * 0.3) * S.fontScale;
+    ctx.save();
+    ctx.rotate(mid);
+    ctx.font = `${size}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = size * 0.15; ctx.shadowOffsetY = size * 0.05;
+    s.o.icons.forEach((ic, n) => {
+      ctx.save(); ctx.translate(inner + avail * (n ? 0.74 : 0.26), 0); ctx.rotate(Math.PI / 2);
+      ctx.fillText(ic, 0, 0); ctx.restore();
+    });
+    ctx.restore();
+    return;
+  }
+  const target = Math.max(7 * dpr, Math.min(r * 0.13 * S.fontScale, arcH));
+  const raw = s.o.text.trim();
+  const layouts = [[raw]];
+  const words = raw.split(' ');
+  const cut = raw.indexOf(' / ');
+  if (cut > 0) {
+    layouts.length = 0;
+    layouts.push([raw.slice(0, cut), raw.slice(cut + 3)]);
+  } else if (words.length > 1) {
+    let bestSplit = null;
+    for (let k = 1; k < words.length; k++) {
+      const a = words.slice(0, k).join(' '), b = words.slice(k).join(' ');
+      const score = Math.max(a.length, b.length);
+      if (!bestSplit || score < bestSplit.score) bestSplit = { score, lines: [a, b] };
+    }
+    layouts.push(bestSplit.lines);
+  }
+  let best = null;
+  for (const lines of layouts) {
+    let f = Math.max(6 * dpr, Math.min(target, arcH / (lines.length * 1.1)));
+    ctx.font = `700 ${f}px ${S.font}`;
+    const wmax = Math.max(...lines.map(l => ctx.measureText(l).width));
+    if (wmax > avail) f = Math.max(6 * dpr, f * avail / wmax * 0.97);
+    if (!best || f > best.f) best = { lines, f };
+  }
+  const fs = best.f;
+  ctx.font = `700 ${fs}px ${S.font}`;
+  const lines = best.lines.map(t => {
+    while (ctx.measureText(t).width > avail && t.length > 1) t = t.slice(0, -1).trimEnd() + '…';
+    return t;
+  });
+  const light = S.textColor === 'light' || (S.textColor === 'auto' && lum(s.color) <= 0.6);
+  ctx.save();
+  ctx.rotate(mid);
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = light ? '#fff' : '#14162b';
+  ctx.shadowColor = light ? 'rgba(0,0,0,.35)' : 'rgba(255,255,255,.3)';
+  ctx.shadowBlur = fs * 0.15;
+  ctx.textAlign = S.textMode === 'out' ? 'left' : 'right';
+  const x = S.textMode === 'out' ? inner : outer;
+  lines.forEach((t, i) => ctx.fillText(t, x, (i - (lines.length - 1) / 2) * fs * 1.1));
+  ctx.restore();
+}
+
+function drawPointer(cx, cy, R) {
+  const L = R * 0.17;
+  ctx.save();
+  ctx.translate(cx, cy - R - R * 0.015);
+  ctx.rotate(-kick * 0.45);
+  ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = R * 0.03; ctx.shadowOffsetY = R * 0.012;
+  ctx.beginPath();
+  if (S.pointer === 'triangle') {
+    ctx.moveTo(-L * 0.5, -L * 0.25); ctx.lineTo(L * 0.5, -L * 0.25); ctx.lineTo(0, L);
+  } else if (S.pointer === 'arrow') {
+    ctx.moveTo(0, L); ctx.lineTo(-L * 0.55, L * 0.25); ctx.lineTo(-L * 0.25, L * 0.25); ctx.lineTo(-L * 0.25, -L * 0.6);
+    ctx.lineTo(L * 0.25, -L * 0.6); ctx.lineTo(L * 0.25, L * 0.25); ctx.lineTo(L * 0.55, L * 0.25);
+  } else {
+    ctx.moveTo(0, L);
+    ctx.bezierCurveTo(-L * 0.15, L * 0.6, -L * 0.5, L * 0.35, -L * 0.5, 0);
+    ctx.arc(0, 0, L * 0.5, Math.PI, 0);
+    ctx.bezierCurveTo(L * 0.5, L * 0.35, L * 0.15, L * 0.6, 0, L);
+  }
+  ctx.closePath();
+  const g = ctx.createLinearGradient(-L * 0.5, 0, L * 0.5, 0);
+  g.addColorStop(0, mix(S.pointerColor, 255, 0.35)); g.addColorStop(0.5, S.pointerColor); g.addColorStop(1, mix(S.pointerColor, 0, 0.3));
+  ctx.fillStyle = g; ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 2 * dpr; ctx.stroke();
+  if (S.pointer === 'pin') { ctx.fillStyle = 'rgba(0,0,0,.35)'; pathCircle(0, 0, L * 0.14); ctx.fill(); }
+  ctx.restore();
+}
+
+/* ---------- animation loop ---------- */
+let prev = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  if (spinState) {
+    const p = Math.min(1, (now - spinState.t0) / spinState.dur);
+    theta = spinState.from + spinState.delta * EASE[S.easing](p);
+    if (p >= 1) finishSpin();
+  } else if (S.idle && !winId && !modalWinner) {
+    theta += dt * 0.15;
+  }
+  const sl = slices();
+  if (sl.length) {
+    const idx = sliceIndexAt(sl, theta);
+    if (idx !== lastIdx) {
+      if (spinState) { tickSound(); kick = 1; }
+      lastIdx = idx;
+    }
+  }
+  kick = Math.max(0, kick - dt * 6);
+  draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+
+/* ---------- spinning ---------- */
+function spin() {
+  if (spinState) return;
+  const sl = slices();
+  if (sl.length < 2) return toast('Add at least two options with text');
+  audio();
+  closeModal(false);
+  const total = sl[sl.length - 1].end;
+  const x = rand() * total;
+  const win = sl.find(s => x >= s.start && x < s.end) || sl[sl.length - 1];
+  const local = win.start + (win.end - win.start) * (0.1 + 0.8 * rand());
+  const target = mod(-Math.PI / 2 - local, TAU);
+  const delta = mod(target - mod(theta, TAU), TAU) + TAU * (S.spins + Math.floor(rand() * 3));
+  winId = null;
+  bulbMode = 'spin';
+  spinState = { from: theta, delta, t0: performance.now(), dur: S.duration * 1000, win };
+  $('#spin').disabled = true; $('#spin').textContent = 'SPINNING…';
+  startMusic();
+}
+
+function finishSpin() {
+  const { win, from, delta } = spinState;
+  theta = from + delta;
+  spinState = null;
+  winId = win.o.id;
+  stopMusic();
+  bulbMode = 'win';
+  setTimeout(() => { if (bulbMode === 'win') bulbMode = 'idle'; }, 3500);
+  $('#spin').disabled = false; $('#spin').textContent = 'SPIN';
+  S.history.unshift({ text: win.o.text, color: win.color, time: Date.now() });
+  S.history.length = Math.min(S.history.length, 60);
+  save(); renderHistory();
+  winSound();
+  if (S.confetti) confetti(win.color);
+  modalWinner = win.o;
+  if (S.popup) setTimeout(() => showModal(win), 500);
+}
+
+/* ---------- modal ---------- */
+function showModal(win) {
+  const wt = $('#winText');
+  wt.innerHTML = '';
+  win.o.text.split(' / ').forEach((part, i) => {
+    if (i) { const hr = document.createElement('hr'); wt.append(hr); }
+    const d = document.createElement('div'); d.textContent = part; wt.append(d);
+  });
+  $('#crown').textContent = win.o.icons ? win.o.icons.join('  ') : '🎉';
+  $('#card').style.setProperty('--wc', win.color);
+  $('#modal').hidden = false;
+}
+function closeModal(allowRemove = true) {
+  const m = modalWinner;
+  $('#modal').hidden = true;
+  modalWinner = null;
+  if (allowRemove && S.autoRemove && m) removeOption(m.id);
+}
+function removeOption(id) {
+  S.options = S.options.filter(o => o.id !== id);
+  winId = null; save(); renderList();
+}
+$('#mClose').onclick = () => closeModal();
+$('#mAgain').onclick = () => { closeModal(); spin(); };
+$('#mRemove').onclick = () => { const m = modalWinner; $('#modal').hidden = true; modalWinner = null; if (m) removeOption(m.id); };
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+/* ---------- confetti ---------- */
+const fx = $('#fx'), fctx = fx.getContext('2d');
+let parts = [], fxRunning = false;
+function fitFx() { fx.width = innerWidth * dpr; fx.height = innerHeight * dpr; }
+addEventListener('resize', fitFx);
+function confetti(accent) {
+  fitFx();
+  const b = cv.getBoundingClientRect();
+  const ox = (b.left + b.width / 2) * dpr, oy = (b.top + b.height / 2) * dpr;
+  const colors = [accent, '#ffd60a', '#ff4d6d', '#3a86ff', '#2ec4b6', '#fff', ...(PALETTES[S.palette] || [])];
+  for (let i = 0; i < 220; i++) {
+    const a = Math.random() * TAU, v = (300 + Math.random() * 900) * dpr;
+    parts.push({ x: ox, y: oy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 500 * dpr, rot: Math.random() * TAU, vr: (Math.random() - .5) * 14,
+      w: (6 + Math.random() * 8) * dpr, h: (4 + Math.random() * 6) * dpr, c: colors[i % colors.length], life: 0, max: 2.5 + Math.random() * 2 });
+  }
+  if (!fxRunning) { fxRunning = true; let last = performance.now(); requestAnimationFrame(function step(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    fctx.clearRect(0, 0, fx.width, fx.height);
+    parts = parts.filter(p => p.life < p.max && p.y < fx.height + 50);
+    for (const p of parts) {
+      p.life += dt; p.vy += 1400 * dpr * dt; p.vx *= 1 - 0.9 * dt; p.vy *= 1 - 0.6 * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      fctx.save(); fctx.globalAlpha = Math.min(1, (p.max - p.life) * 1.5);
+      fctx.translate(p.x, p.y); fctx.rotate(p.rot); fctx.fillStyle = p.c; fctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      fctx.restore();
+    }
+    if (parts.length) requestAnimationFrame(step); else { fxRunning = false; fctx.clearRect(0, 0, fx.width, fx.height); }
+  }); }
+}
+
+/* ---------- toast ---------- */
+let toastEl;
+function toast(msg) {
+  toastEl?.remove();
+  toastEl = document.createElement('div');
+  toastEl.className = 'toast'; toastEl.textContent = msg;
+  document.body.append(toastEl);
+  const el = toastEl;
+  setTimeout(() => el.remove(), 2200);
+}
+
+/* ---------- options list ---------- */
+const listEl = $('#list');
+function effectiveColors() {
+  const m = {};
+  for (const s of slices()) m[s.o.id] = s.color;
+  return m;
+}
+function renderList(focusId) {
+  const col = effectiveColors();
+  listEl.innerHTML = '';
+  for (const o of S.options) {
+    const row = document.createElement('div');
+    row.className = 'row' + (o.enabled ? '' : ' off');
+    row.dataset.id = o.id;
+    row.innerHTML = `<input type="color" class="c" title="Slice color (double-click to reset)">
+      <input type="text" class="t" placeholder="Option text">
+      <input type="number" class="w" min="0.1" step="0.5" title="Weight (odds)">
+      <input type="checkbox" class="e" title="Include on the wheel">
+      <button class="del" title="Delete">✕</button>`;
+    $('.c', row).value = col[o.id] || '#888888';
+    $('.t', row).value = o.text;
+    $('.w', row).value = o.weight;
+    $('.e', row).checked = o.enabled;
+    listEl.append(row);
+  }
+  if (focusId) $(`.row[data-id="${focusId}"] .t`)?.focus();
+  winId = null;
+  save();
+}
+const optOf = el => S.options.find(o => o.id === el.closest('.row')?.dataset.id);
+listEl.addEventListener('input', e => {
+  const o = optOf(e.target); if (!o) return;
+  if (e.target.classList.contains('t')) o.text = e.target.value;
+  else if (e.target.classList.contains('w')) o.weight = Math.max(0, parseFloat(e.target.value) || 0);
+  else if (e.target.classList.contains('c')) o.color = e.target.value;
+  else if (e.target.classList.contains('e')) { o.enabled = e.target.checked; e.target.closest('.row').classList.toggle('off', !o.enabled); }
+  winId = null; save();
+});
+listEl.addEventListener('change', e => { if (e.target.classList.contains('e')) renderList(); });
+listEl.addEventListener('click', e => {
+  if (e.target.classList.contains('del')) { removeOption(optOf(e.target).id); }
+});
+listEl.addEventListener('dblclick', e => {
+  if (e.target.classList.contains('c')) { optOf(e.target).color = ''; renderList(); }
+});
+
+function addOption(text) {
+  text = text.trim(); if (!text) return;
+  const o = { id: uid(), text, weight: 1, color: '', enabled: true };
+  S.options.push(o); renderList();
+}
+$('#addBtn').onclick = () => { addOption($('#addText').value); $('#addText').value = ''; $('#addText').focus(); };
+$('#addText').addEventListener('keydown', e => { if (e.key === 'Enter') $('#addBtn').click(); });
+$('#bShuffle').onclick = () => {
+  for (let i = S.options.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [S.options[i], S.options[j]] = [S.options[j], S.options[i]]; }
+  renderList();
+};
+$('#bSort').onclick = () => { S.options.sort((a, b) => a.text.localeCompare(b.text)); renderList(); };
+$('#bClear').onclick = () => { if (confirm('Remove all options?')) { S.options = []; renderList(); } };
+$('#bUncolor').onclick = () => { S.options.forEach(o => o.color = ''); renderList(); };
+$('#bBulk').onclick = () => {
+  const box = $('#bulkBox');
+  box.hidden = !box.hidden;
+  if (!box.hidden) $('#bulkText').value = S.options.map(o => o.text).join('\n');
+};
+$('#bulkApply').onclick = () => {
+  const lines = $('#bulkText').value.split('\n').map(l => l.trim()).filter(Boolean);
+  const pool = [...S.options];
+  S.options = lines.map(text => {
+    const k = pool.findIndex(o => o.text === text);
+    return k >= 0 ? pool.splice(k, 1)[0] : { id: uid(), text, weight: 1, color: '', enabled: true };
+  });
+  $('#bulkBox').hidden = true; renderList();
+};
+
+const presetSel = $('#preset');
+presetSel.innerHTML = '<option value="">Load a preset…</option>' + Object.keys(PRESETS).map(k => `<option>${k}</option>`).join('');
+presetSel.onchange = () => {
+  const p = PRESETS[presetSel.value]; if (!p) return;
+  S.options = p.map(x => Array.isArray(x) ? { id: uid(), text: x[0], weight: x[1], color: '', enabled: true } : mkOpt(x));
+  S.title = presetSel.value.replace(/ \(.*\)/, '');
+  presetSel.value = ''; renderList(); syncUI();
+};
+
+/* ---------- import / export / reset ---------- */
+$('#bExport').onclick = () => {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'spin-wheel.json'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$('#bImport').onclick = () => $('#file').click();
+$('#file').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!d || !Array.isArray(d.options)) throw 0;
+    d.options = d.options.map(o => ({ id: uid(), text: String(o.text ?? ''), weight: Number(o.weight) || 1, color: o.color || '', enabled: o.enabled !== false, bg: Array.isArray(o.bg) ? o.bg : undefined, icons: o.icons }));
+    S = { ...structuredClone(DEFAULTS), ...d, history: Array.isArray(d.history) ? d.history : [] };
+    applyTheme(); renderList(); renderHistory(); syncUI(); toast('Imported');
+  } catch { toast('That file is not a valid wheel'); }
+  e.target.value = '';
+};
+$('#bReset').onclick = () => {
+  if (!confirm('Reset all options and settings?')) return;
+  S = structuredClone(DEFAULTS); S.options.forEach(o => o.id = uid());
+  S.theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  applyTheme(); renderList(); renderHistory(); syncUI();
+};
+
+/* ---------- settings binding ---------- */
+function syncUI() {
+  for (const el of $$('[data-k]')) {
+    const v = S[el.dataset.k];
+    if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
+  }
+  for (const o of $$('[data-out]')) {
+    const v = S[o.dataset.out];
+    o.textContent = (typeof v === 'number' ? +v.toFixed(3) : v) + (o.dataset.unit || '');
+  }
+  $$('.pal').forEach(b => b.classList.toggle('on', b.dataset.pal === S.palette));
+  $('#title').textContent = S.title;
+  $('#bSound').textContent = S.sound ? '🔊' : '🔇';
+  $('#musicFileRow').hidden = S.music !== 'file';
+}
+document.addEventListener('input', e => {
+  const el = e.target, k = el.dataset?.k;
+  if (!k) return;
+  S[k] = el.type === 'checkbox' ? el.checked : (el.type === 'range' || el.type === 'number') ? Number(el.value) : el.value;
+  syncUI(); save();
+});
+
+const palsEl = $('#pals');
+for (const [name, cols] of Object.entries(PALETTES)) {
+  const b = document.createElement('button');
+  b.className = 'pal'; b.dataset.pal = name; b.title = name[0].toUpperCase() + name.slice(1);
+  const step = 100 / cols.length;
+  b.style.background = `linear-gradient(90deg,${cols.map((c, i) => `${c} ${i * step}% ${(i + 1) * step}%`).join(',')})`;
+  palsEl.append(b);
+}
+palsEl.addEventListener('click', e => {
+  const b = e.target.closest('.pal'); if (!b) return;
+  S.palette = b.dataset.pal; renderList(); syncUI();
+});
+
+/* ---------- history ---------- */
+function renderHistory() {
+  const counts = {};
+  for (const h of S.history) counts[h.text] = (counts[h.text] || 0) + 1;
+  const col = {}; S.history.forEach(h => col[h.text] ||= h.color);
+  $('#tally').innerHTML = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 12)
+    .map(([t, n]) => `<span class="chip"><span class="dot" style="background:${col[t]}"></span><span class="tt"></span> ×${n}</span>`).join('');
+  $$('#tally .tt').forEach((el, i) => el.textContent = Object.entries(counts).sort((a, b) => b[1] - a[1])[i][0]);
+  const ul = $('#hist'); ul.innerHTML = '';
+  if (!S.history.length) ul.innerHTML = '<li style="color:var(--muted)">No spins yet.</li>';
+  for (const h of S.history) {
+    const li = document.createElement('li');
+    li.innerHTML = '<span class="dot"></span><span class="tx"></span><small></small>';
+    $('.dot', li).style.background = h.color;
+    $('.tx', li).textContent = h.text;
+    $('small', li).textContent = new Date(h.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    ul.append(li);
+  }
+  const last = S.history[0];
+  const el = $('#last');
+  el.innerHTML = '';
+  if (last) {
+    el.append('Last result:');
+    const c = document.createElement('span'); c.className = 'chip';
+    c.innerHTML = '<span class="dot"></span><span class="tx"></span>';
+    $('.dot', c).style.background = last.color; $('.tx', c).textContent = last.text;
+    el.append(c);
+  }
+}
+$('#bHistClear').onclick = () => { S.history = []; save(); renderHistory(); };
+
+/* ---------- chrome ---------- */
+function applyTheme() { document.documentElement.dataset.theme = S.theme; }
+$('#bTheme').onclick = () => { S.theme = S.theme === 'dark' ? 'light' : 'dark'; applyTheme(); save(); };
+$('#bSound').onclick = () => { S.sound = !S.sound; syncUI(); save(); };
+$('#bFull').onclick = () => {
+  try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch {}
+};
+$$('.tabs button').forEach(b => b.onclick = () => {
+  $$('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  $$('.pane').forEach(p => p.classList.toggle('on', p.dataset.pane === b.dataset.tab));
+});
+$('#spin').onclick = spin;
+cv.addEventListener('click', spin);
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.code === 'Space' && !e.target.closest('input,textarea,select,button')) { e.preventDefault(); spin(); }
+});
+
+/* ---------- boot ---------- */
+applyTheme(); fitCanvas(); renderList(); renderHistory(); syncUI();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
