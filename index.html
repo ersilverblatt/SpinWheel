@@ -27,7 +27,7 @@ canvas#wheel{width:100%;height:100%;cursor:pointer;display:block}
 .last{display:flex;gap:8px;align-items:center;min-height:30px;color:var(--muted)}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;background:var(--panel2);color:var(--fg);font-weight:600}
 .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
-aside{background:var(--panel);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(10px);overflow:hidden;position:sticky;top:12px;max-height:calc(100vh - 24px);display:flex;flex-direction:column}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;position:sticky;top:12px;max-height:calc(100vh - 24px);display:flex;flex-direction:column}
 .tabs{display:flex;border-bottom:1px solid var(--line)}
 .tabs button{flex:1;padding:13px 4px;background:none;border:0;color:var(--muted);font:inherit;font-weight:600;cursor:pointer;border-bottom:2px solid transparent}
 .tabs button.on{color:var(--fg);border-color:var(--accent)}
@@ -72,7 +72,7 @@ textarea{width:100%;min-height:150px;resize:vertical}
 #sky{position:fixed;inset:0;z-index:21;pointer-events:none;opacity:0;visibility:hidden;overflow:hidden;transition:opacity .6s,visibility .6s;background:linear-gradient(165deg,rgba(30,10,70,.95),rgba(58,26,110,.93) 35%,rgba(14,58,122,.93) 70%,rgba(10,28,70,.95))}
 #sky.on{opacity:1;visibility:visible}
 #stars{position:absolute;inset:0;width:100%;height:100%}
-.rbw{--bands:transparent 0 60%,#ff3b4e 60% 64.5%,#ff9a2e 64.5% 69%,#ffe14a 69% 73.5%,#3fd16a 73.5% 78%,#3aa0ff 78% 82.5%,#8a5cff 82.5% 87%,transparent 87.4%;position:absolute;inset:-25%;opacity:.72;mix-blend-mode:screen;animation:rbsway 9s ease-in-out infinite alternate}
+.rbw{--bands:transparent 0 60%,#ff3b4e 60% 64.5%,#ff9a2e 64.5% 69%,#ffe14a 69% 73.5%,#3fd16a 73.5% 78%,#3aa0ff 78% 82.5%,#8a5cff 82.5% 87%,transparent 87.4%;position:absolute;inset:-25%;opacity:.72;animation:rbsway 9s ease-in-out infinite alternate}
 .rbw.a{background:radial-gradient(circle 95vmax at 15% 110%,var(--bands))}
 .rbw.b{background:radial-gradient(circle 70vmax at 90% 115%,var(--bands));animation-duration:11s;animation-direction:alternate-reverse}
 .rbw.c{background:radial-gradient(circle 55vmax at 8% -12%,var(--bands));animation-duration:13s}
@@ -89,7 +89,7 @@ body.partyon .modal{background:transparent;backdrop-filter:none}
 .fall:nth-child(even) .pcat{animation-name:hop2;animation-duration:.75s}
 @keyframes fall{from{transform:translate(0,-30vh)}to{transform:translate(var(--dx,0),125vh)}}
 @keyframes twirl{to{transform:rotate(360deg)}}
-.pcat{width:clamp(56px,11vmin,120px);height:auto;max-height:18vmin;object-fit:contain;transform-origin:50% 100%;animation:hop .6s ease-in-out infinite alternate;animation-delay:var(--d,0s);filter:drop-shadow(0 6px 8px rgba(0,0,0,.35))}
+.pcat{width:clamp(56px,11vmin,120px);height:auto;max-height:18vmin;object-fit:contain;transform-origin:50% 100%;animation:hop .6s ease-in-out infinite alternate;animation-delay:var(--d,0s)}
 .pcat .armL{transform-origin:38px 96px;animation:wave .5s ease-in-out infinite alternate;animation-delay:var(--d,0s)}
 .pcat .armR{transform-origin:82px 96px;animation:wave2 .5s ease-in-out infinite alternate;animation-delay:var(--d,0s)}
 .pcat .tail{transform-origin:88px 128px;animation:swish .9s ease-in-out infinite alternate}
@@ -506,13 +506,13 @@ function buildParty(o) {
   const icons = (o && o.icons) || ['🎉', '✨'];
   const r = (a, b) => a + Math.random() * (b - a);
   const out = [];
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 8; i++) {
     const inner = S.cats === 'custom' && customCats.length
       ? `<img class="pcat" src="${customCats[i % customCats.length]}" alt="" style="--d:${(-i * 0.17).toFixed(2)}s">`
       : catSVG(CAT_STYLES[i % CAT_STYLES.length], i, hats.length ? hats[i % hats.length] : null);
     out.push(`<div class="fall" style="left:${r(2, 88).toFixed(1)}%;--dur:${r(3.15, 4.9).toFixed(2)}s;--del:${r(0, 2.24).toFixed(2)}s;--dx:${r(-8, 8).toFixed(1)}vw">${inner}</div>`);
   }
-  for (let j = 0; j < 16; j++) {
+  for (let j = 0; j < 10; j++) {
     out.push(`<div class="fall em" style="left:${r(2, 94).toFixed(1)}%;--dur:${r(2.45, 4.2).toFixed(2)}s;--del:${r(0, 2.66).toFixed(2)}s;--dx:${r(-6, 6).toFixed(1)}vw"><span>${icons[j % icons.length]}</span></div>`);
   }
   rain.innerHTML = out.join('');
@@ -749,7 +749,7 @@ const SCENES = {
 };
 function drawScenes(now) {
   const W = innerWidth, H = innerHeight, t = now / 1000, wide = W >= H;
-  q.setTransform(dpr, 0, 0, dpr, 0, 0); q.clearRect(0, 0, W, H);
+  q.setTransform(skyDpr, 0, 0, skyDpr, 0, 0); q.clearRect(0, 0, W, H);
   const pw = wide ? W / 2 : W, ph = wide ? H : H / 2;
   for (let k = 0; k < 2; k++) {
     q.save(); q.beginPath(); q.rect(wide ? k * pw : 0, wide ? 0 : k * ph, pw, ph); q.clip();
@@ -757,7 +757,9 @@ function drawScenes(now) {
     (SCENES[sceneNames[k]] || SCENES.reuse)(pw, ph, t);
     q.restore();
   }
-  q.save(); q.fillStyle = '#fff'; q.shadowColor = '#fff'; q.shadowBlur = 14;
+  q.save(); q.fillStyle = 'rgba(255,255,255,.3)';
+  if (wide) q.fillRect(W / 2 - 6, 0, 12, H); else q.fillRect(0, H / 2 - 6, W, 12);
+  q.fillStyle = '#fff';
   if (wide) q.fillRect(W / 2 - 1.5, 0, 3, H); else q.fillRect(0, H / 2 - 1.5, W, 3);
   q.restore();
 }
@@ -765,10 +767,10 @@ function drawScenes(now) {
 /* ---------- starry sky ---------- */
 const skyEl = $('#sky'), starsCv = $('#stars'), sx = starsCv.getContext('2d');
 const STAR_COLORS = ['#ffffff', '#ffd6f5', '#b8e4ff', '#fff4a8', '#d9c2ff', '#b9ffd9'];
-let stars = [], shooters = [], skyRun = false;
+let stars = [], shooters = [], skyRun = false, skyDpr = 1;
 function sparkle(x, y, R, a, color) {
   sx.save();
-  sx.globalAlpha = a; sx.fillStyle = color; sx.shadowColor = color; sx.shadowBlur = R * 1.2;
+  sx.globalAlpha = a; sx.fillStyle = color;
   sx.beginPath();
   sx.moveTo(x, y - R); sx.quadraticCurveTo(x, y, x + R, y); sx.quadraticCurveTo(x, y, x, y + R);
   sx.quadraticCurveTo(x, y, x - R, y); sx.quadraticCurveTo(x, y, x, y - R);
@@ -782,26 +784,27 @@ function skyFrame(now) {
   sx.clearRect(0, 0, W, H);
   for (const s of stars) {
     const a = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * s.s + s.p));
-    if (s.big) sparkle(s.x * W, s.y * H, s.r * 4.5 * dpr, a, s.c);
-    else { sx.globalAlpha = a; sx.fillStyle = s.c; sx.beginPath(); sx.arc(s.x * W, s.y * H, s.r * dpr, 0, TAU); sx.fill(); }
+    if (s.big) sparkle(s.x * W, s.y * H, s.r * 4.5 * skyDpr, a, s.c);
+    else { sx.globalAlpha = a; sx.fillStyle = s.c; sx.beginPath(); sx.arc(s.x * W, s.y * H, s.r * skyDpr, 0, TAU); sx.fill(); }
   }
   sx.globalAlpha = 1;
-  if (Math.random() < 0.015) shooters.push({ x: Math.random() * W * 0.8, y: Math.random() * H * 0.3, vx: (6 + Math.random() * 5) * dpr, vy: (3 + Math.random() * 3) * dpr, life: 0 });
+  if (Math.random() < 0.015) shooters.push({ x: Math.random() * W * 0.8, y: Math.random() * H * 0.3, vx: (6 + Math.random() * 5) * skyDpr, vy: (3 + Math.random() * 3) * skyDpr, life: 0 });
   shooters = shooters.filter(p => p.life < 60);
   for (const p of shooters) {
     p.x += p.vx; p.y += p.vy; p.life++;
     const g = sx.createLinearGradient(p.x, p.y, p.x - p.vx * 12, p.y - p.vy * 12);
     g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(1, 'rgba(255,255,255,0)');
-    sx.strokeStyle = g; sx.lineWidth = 2 * dpr; sx.lineCap = 'round';
+    sx.strokeStyle = g; sx.lineWidth = 2 * skyDpr; sx.lineCap = 'round';
     sx.beginPath(); sx.moveTo(p.x, p.y); sx.lineTo(p.x - p.vx * 12, p.y - p.vy * 12); sx.stroke();
   }
   requestAnimationFrame(skyFrame);
 }
 function startSky(o) {
   themed = !!(o && Array.isArray(o.scenes) && o.scenes.length === 2);
+  skyDpr = Math.min(dpr, 1.25);
   skyEl.classList.toggle('themed', themed);
-  if (themed) { sceneNames = o.scenes; sceneCv.width = Math.round(innerWidth * dpr); sceneCv.height = Math.round(innerHeight * dpr); }
-  starsCv.width = Math.round(innerWidth * dpr); starsCv.height = Math.round(innerHeight * dpr);
+  if (themed) { sceneNames = o.scenes; sceneCv.width = Math.round(innerWidth * skyDpr); sceneCv.height = Math.round(innerHeight * skyDpr); }
+  starsCv.width = Math.round(innerWidth * skyDpr); starsCv.height = Math.round(innerHeight * skyDpr);
   const n = Math.round(innerWidth * innerHeight / 5500);
   stars = Array.from({ length: n }, () => ({
     x: Math.random(), y: Math.random(), r: 0.5 + Math.random() * 1.6, p: Math.random() * TAU, s: 1 + Math.random() * 3,
@@ -847,6 +850,24 @@ new ResizeObserver(fitCanvas).observe(cv);
 
 function pathCircle(x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); }
 
+const rimCache = { key: '', cv: document.createElement('canvas') };
+const emojiCache = new Map();
+function emojiSprite(ic, size) {
+  const px = Math.max(4, Math.round(size)), key = ic + '|' + px;
+  let e = emojiCache.get(key);
+  if (!e) {
+    if (emojiCache.size > 80) emojiCache.clear();
+    const c = document.createElement('canvas'), g = c.getContext('2d');
+    c.width = c.height = Math.ceil(px * 2);
+    g.font = `${px}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = px * 0.15; g.shadowOffsetY = px * 0.05;
+    g.fillText(ic, c.width / 2, c.height / 2);
+    e = { c, half: c.width / 2 };
+    emojiCache.set(key, e);
+  }
+  return e;
+}
+
 function draw(t) {
   const W = cv.width, H = cv.height;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -855,13 +876,17 @@ function draw(t) {
   const rw = R * S.rimWidth, r = R - rw, hubR = r * S.hubSize;
   const sl = slices();
 
-  // rim
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = R * 0.1; ctx.shadowOffsetY = R * 0.035;
-  const rg = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
-  rg.addColorStop(0, mix(S.rimColor, 255, 0.3)); rg.addColorStop(0.5, S.rimColor); rg.addColorStop(1, mix(S.rimColor, 0, 0.35));
-  ctx.fillStyle = rg; pathCircle(cx, cy, R); ctx.fill();
-  ctx.restore();
+  // rim (cached: its blurred shadow is too costly to redraw every frame)
+  const rimKey = `${W}|${H}|${S.rimColor}`;
+  if (rimKey !== rimCache.key) {
+    rimCache.key = rimKey; rimCache.cv.width = W; rimCache.cv.height = H;
+    const c = rimCache.cv.getContext('2d');
+    c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = R * 0.1; c.shadowOffsetY = R * 0.035;
+    const rg = c.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+    rg.addColorStop(0, mix(S.rimColor, 255, 0.3)); rg.addColorStop(0.5, S.rimColor); rg.addColorStop(1, mix(S.rimColor, 0, 0.35));
+    c.fillStyle = rg; c.beginPath(); c.arc(cx, cy, R, 0, TAU); c.fill();
+  }
+  ctx.drawImage(rimCache.cv, 0, 0);
 
   // wedges
   ctx.save();
@@ -911,7 +936,6 @@ function draw(t) {
   if (S.pegs && sl.length > 1) {
     for (const s of sl) {
       ctx.save(); ctx.rotate(s.start);
-      ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = R * 0.012;
       ctx.fillStyle = '#f5f1e6'; pathCircle(r, 0, rw * 0.2); ctx.fill();
       ctx.restore();
     }
@@ -931,7 +955,8 @@ function draw(t) {
       else on = Math.floor(t * 1.5) % 2 === i % 2;
       const x = cx + Math.cos(a) * br, y = cy + Math.sin(a) * br;
       ctx.save();
-      if (on) { ctx.shadowColor = S.lightColor; ctx.shadowBlur = R * 0.04; ctx.fillStyle = S.lightColor; }
+      if (on) { ctx.globalAlpha = 0.3; ctx.fillStyle = S.lightColor; pathCircle(x, y, rw * 0.42); ctx.fill(); ctx.globalAlpha = 1; }
+      if (on) ctx.fillStyle = S.lightColor;
       else { ctx.fillStyle = mix(S.lightColor, 0, 0.7); }
       pathCircle(x, y, rw * 0.22); ctx.fill();
       ctx.restore();
@@ -968,11 +993,10 @@ function drawLabel(s, r, hubR, R) {
     const size = Math.min(avail * 0.4, arcH * 1.1, r * 0.3) * S.fontScale;
     ctx.save();
     ctx.rotate(mid);
-    ctx.font = `${size}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = size * 0.15; ctx.shadowOffsetY = size * 0.05;
     s.o.icons.forEach((ic, n) => {
+      const e = emojiSprite(ic, size);
       ctx.save(); ctx.translate(inner + avail * (n ? 0.74 : 0.26), 0); ctx.rotate(Math.PI / 2);
-      ctx.fillText(ic, 0, 0); ctx.restore();
+      ctx.drawImage(e.c, -e.half, -e.half); ctx.restore();
     });
     ctx.restore();
     return;
@@ -1050,8 +1074,10 @@ function drawPointer(cx, cy, R) {
 }
 
 /* ---------- animation loop ---------- */
-let prev = performance.now();
+let prev = performance.now(), lastDraw = 0;
 function frame(now) {
+  if (!spinState && now - lastDraw < 32) { requestAnimationFrame(frame); return; }
+  lastDraw = now;
   const dt = Math.min(0.05, (now - prev) / 1000);
   prev = now;
   if (spinState) {
@@ -1070,7 +1096,7 @@ function frame(now) {
     }
   }
   kick = Math.max(0, kick - dt * 6);
-  draw(now / 1000);
+  if (!(skyRun && S.scene !== 'none')) draw(now / 1000);
   requestAnimationFrame(frame);
 }
 
